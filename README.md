@@ -1,21 +1,12 @@
-<h1 align="center">netpulse</h1>
+# Netpulse
 
-<p align="center">
-  A compact, read-only TCP connection monitor for Windows.
-</p>
+A compact, read-only TCP connection monitor for Windows.
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> Â·
-  <a href="#modes">Modes</a> Â·
-  <a href="#output">Output</a> Â·
-  <a href="#how-it-works">How It Works</a> Â·
-  <a href="#scope-and-safeguards">Scope</a> Â·
-  <a href="SECURITY.md">Security</a>
-</p>
+[Quick Start](#quick-start) Â· [Modes](#modes) Â· [Output](#output) Â· [How It Works](#how-it-works) Â· [Scope](#scope-and-safeguards) Â· [Security](SECURITY.md)
 
 ---
 
-`netpulse` turns the local Windows TCP table into a clear process-level view. It shows established connections, their owning processes, remote-address scope, and the Authenticode status of each available executable.
+Netpulse turns the local Windows TCP table into a clear process-level view. It shows established connections, their owning processes, remote-address scope, and the Authenticode status of each available executable.
 
 Run it once for a snapshot or keep it open to see connections appear and disappear. It does not scan the network, contact external services, modify the firewall, stop processes, or store connection history.
 
@@ -23,7 +14,7 @@ Run it once for a snapshot or keep it open to see connections appear and disappe
 
 ## Quick Start
 
-`netpulse` requires Windows PowerShell 5.1 or later and the built-in `NetTCPIP` and `Microsoft.PowerShell.Security` modules. Administrator rights are not required.
+Netpulse requires Windows PowerShell 5.1 or later and the built-in `NetTCPIP` and `Microsoft.PowerShell.Security` modules. Administrator rights are not required.
 
 Clone the repository and take one snapshot:
 
@@ -90,7 +81,7 @@ Watch mode keeps the previous sample in memory and compares connection keys made
 
 ## Scope and Safeguards
 
-`netpulse` is deliberately limited:
+Netpulse is deliberately limited:
 
 - established TCP connections on the current computer only
 - no UDP endpoints or listening TCP ports
@@ -101,10 +92,10 @@ Watch mode keeps the previous sample in memory and compares connection keys made
 - protected or short-lived process details may appear as `Unknown`
 - connections that open and close between five-second samples can be missed
 
-`netpulse` provides local connection context; it is not an intrusion-detection system and does not assign threat scores.
+Netpulse provides local connection context; it is not an intrusion-detection system and does not assign threat scores.
 
 See [SECURITY.md](SECURITY.md) for the trust boundary, privacy guidance, and vulnerability-reporting process.
 
 ## License
 
-`netpulse` is available under the [MIT License](LICENSE).
+Netpulse source code is available under the [MIT License](LICENSE).
