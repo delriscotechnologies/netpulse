@@ -1,8 +1,17 @@
-# Netpulse
+<h1 align="center">Netpulse</h1>
 
-A compact, read-only TCP connection monitor for Windows.
+<p align="center">
+  A compact, read-only TCP connection monitor for Windows.
+</p>
 
-[Quick Start](#quick-start) Â· [Modes](#modes) Â· [Output](#output) Â· [How It Works](#how-it-works) Â· [Scope](#scope-and-safeguards) Â· [Security](SECURITY.md)
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &middot;
+  <a href="#modes">Modes</a> &middot;
+  <a href="#output">Output</a> &middot;
+  <a href="#how-it-works">How It Works</a> &middot;
+  <a href="#scope-and-safeguards">Scope</a> &middot;
+  <a href="SECURITY.md">Security</a>
+</p>
 
 ---
 
