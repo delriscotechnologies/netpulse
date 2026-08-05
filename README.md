@@ -50,7 +50,7 @@ Watch mode marks new connections as `OPENED` and missing connections as `CLOSED`
 
 ## Output
 
-The terminal report stays intentionally small:
+The terminal report displays the current established TCP connections, including their owning processes and local and remote endpoints:
 
 ```text
  _ __   ___| |_ _ __  _   _| |___  ___
@@ -62,20 +62,28 @@ LOCAL TCP CONNECTION MONITOR
 Del Risco Technologies  |  v1.0.0
 -----------------------------------------
  Mode           : SNAPSHOT
- Connections    : 12
+ Connections    : 4
 -----------------------------------------
+
+Process   PID   Local                 Remote                 Signature
+-------   ---   -----                 ------                 ---------
+chrome    8420  192.168.1.25:52143    203.0.113.10:443       Valid
+code      9116  192.168.1.25:52201    198.51.100.24:443      Valid
+svchost   1540  192.168.1.25:49722    203.0.113.53:443       Valid
+discord   6312  192.168.1.25:52180    198.51.100.80:443      Valid
 ```
+
+> This illustrative output uses sanitized network addresses. Actual results depend on the processes and established connections present on the local computer.
 
 | Field | Meaning |
 | --- | --- |
 | `Process` | Local process name, or `Unknown` when it is unavailable |
 | `PID` | Owning process identifier reported by Windows |
-| `Local` | Local address and port |
-| `Remote` | Remote address and port |
-| `Scope` | `Loopback`, `Private`, `LinkLocal`, `Public`, `Special`, or `Unknown` |
+| `Local` | Local IP address and port |
+| `Remote` | Remote IP address and port |
 | `Signature` | Authenticode status reported by Windows |
 
-`Scope` is a coarse address category, not a trust decision. A valid signature does not prove software is safe, and an unsigned executable is not automatically malicious.
+A valid signature does not prove software is safe, and an unsigned executable is not automatically malicious.
 
 ## How It Works
 
