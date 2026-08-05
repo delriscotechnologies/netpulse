@@ -73,8 +73,6 @@ svchost   1540  192.168.1.25:49722    203.0.113.53:443       Public  Valid
 discord   6312  192.168.1.25:52180    198.51.100.80:443      Public  Valid
 ```
 
-> This illustrative output uses sanitized network addresses. Actual results depend on the processes and established connections present on the local computer.
-
 | Field | Meaning |
 | --- | --- |
 | `Process` | Local process name, or `Unknown` when it is unavailable |
