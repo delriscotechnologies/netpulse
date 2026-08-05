@@ -101,6 +101,8 @@ Netpulse is deliberately limited:
 - protected or short-lived process details may appear as `Unknown`
 - connections that open and close between five-second samples can be missed
 
+This repository does not yet include automated tests or CI. Validate the script on a non-production Windows system before relying on its output.
+
 Netpulse provides local connection context; it is not an intrusion-detection system and does not assign threat scores.
 
 See [SECURITY.md](SECURITY.md) for the trust boundary, privacy guidance, and vulnerability-reporting process.
