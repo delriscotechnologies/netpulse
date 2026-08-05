@@ -65,12 +65,12 @@ Del Risco Technologies  |  v1.0.0
  Connections    : 4
 -----------------------------------------
 
-Process   PID   Local                 Remote                 Signature
--------   ---   -----                 ------                 ---------
-chrome    8420  192.168.1.25:52143    203.0.113.10:443       Valid
-code      9116  192.168.1.25:52201    198.51.100.24:443      Valid
-svchost   1540  192.168.1.25:49722    203.0.113.53:443       Valid
-discord   6312  192.168.1.25:52180    198.51.100.80:443      Valid
+Process   PID   Local                 Remote                 Scope   Signature
+-------   ---   -----                 ------                 -----   ---------
+chrome    8420  192.168.1.25:52143    203.0.113.10:443       Public  Valid
+code      9116  192.168.1.25:52201    198.51.100.24:443      Public  Valid
+svchost   1540  192.168.1.25:49722    203.0.113.53:443       Public  Valid
+discord   6312  192.168.1.25:52180    198.51.100.80:443      Public  Valid
 ```
 
 > This illustrative output uses sanitized network addresses. Actual results depend on the processes and established connections present on the local computer.
@@ -81,9 +81,10 @@ discord   6312  192.168.1.25:52180    198.51.100.80:443      Valid
 | `PID` | Owning process identifier reported by Windows |
 | `Local` | Local IP address and port |
 | `Remote` | Remote IP address and port |
+| `Scope` | `Loopback`, `Private`, `LinkLocal`, `Public`, `Special`, or `Unknown` |
 | `Signature` | Authenticode status reported by Windows |
 
-A valid signature does not prove software is safe, and an unsigned executable is not automatically malicious.
+`Scope` is a coarse address category, not a trust decision. A valid signature does not prove software is safe, and an unsigned executable is not automatically malicious.
 
 ## How It Works
 
