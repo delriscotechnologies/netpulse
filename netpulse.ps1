@@ -1,21 +1,3 @@
-#Requires -Version 5.1
-
-<#
-.SYNOPSIS
-Shows established TCP connections or watches them for changes.
-
-.DESCRIPTION
-netpulse maps established TCP connections to local processes, classifies remote
-addresses, checks executable signatures, and writes a compact console report.
-It is read-only, makes no external requests, and stores no connection data.
-
-.PARAMETER Watch
-Keeps monitoring every five seconds. Press Ctrl+C to stop.
-
-.EXAMPLE
-.\netpulse.ps1 [-Watch]
-#>
-
 [CmdletBinding()]
 param([switch]$Watch)
 Set-StrictMode -Version Latest
