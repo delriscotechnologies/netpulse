@@ -4,15 +4,6 @@
   A compact, read-only TCP connection monitor for Windows.
 </p>
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> &middot;
-  <a href="#modes">Modes</a> &middot;
-  <a href="#output">Output</a> &middot;
-  <a href="#how-it-works">How It Works</a> &middot;
-  <a href="#scope-and-safeguards">Scope</a> &middot;
-  <a href="SECURITY.md">Security</a>
-</p>
-
 ---
 
 Netpulse turns the local Windows TCP table into a clear process-level view. It shows established connections, their owning processes, remote-address scope, and the Authenticode status of each available executable.
