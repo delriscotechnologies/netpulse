@@ -30,7 +30,26 @@ cd netpulse
 
 ## Output
 
-The terminal table includes:
+```text
+ _ __   ___| |_ _ __  _   _| |___  ___
+| '_ \ / _ \ __| '_ \| | | | / __|/ _ \
+| | | |  __/ |_| |_) | |_| | \__ \  __/
+|_| |_|\___|\__| .__/ \__,_|_|___/\___|
+               |_|
+LOCAL TCP CONNECTION MONITOR
+Del Risco Technologies  |  v1.0.0
+-----------------------------------------
+ Mode           : SNAPSHOT
+ Connections    : 4
+-----------------------------------------
+
+Process   PID   Local                 Remote                 Scope   Signature
+-------   ---   -----                 ------                 -----   ---------
+chrome    8420  192.168.1.25:52143    203.0.113.10:443       Public  Valid
+code      9116  192.168.1.25:52201    198.51.100.24:443      Public  Valid
+svchost   1540  192.168.1.25:49722    203.0.113.53:443       Public  Valid
+discord   6312  192.168.1.25:52180    198.51.100.80:443      Public  Valid
+```
 
 | Field | Description |
 | --- | --- |
