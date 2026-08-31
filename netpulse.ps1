@@ -104,8 +104,7 @@ function Show-NetPulseConnection {
         Write-Host 'No established TCP connections found.' -ForegroundColor DarkGray
         return
     }
-    $Connections | Format-Table Process, PID, Local, Remote, Scope, Signature -AutoSize |
-        Out-String -Width 240 | Write-Host
+    $Connections | Format-Table Process, PID, Local, Remote, Scope, Signature -AutoSize | Out-String -Width 240 | Write-Host
 }
 
 function Show-NetPulseEvent {
@@ -117,10 +116,7 @@ function Show-NetPulseEvent {
 }
 
 function Compare-NetPulseConnections {
-    param(
-        [AllowEmptyCollection()][object[]]$Previous,
-        [AllowEmptyCollection()][object[]]$Current
-    )
+    param([AllowEmptyCollection()][object[]]$Previous, [AllowEmptyCollection()][object[]]$Current)
     $previousMap = @{}
     $currentMap = @{}
     foreach ($connection in $Previous) { $previousMap[$connection.ConnectionKey] = $connection }
