@@ -12,7 +12,7 @@ Run it once for a snapshot or use watch mode to see connections open and close.
 
 ## Install
 
-You need Windows and PowerShell. Administrator rights are not required.
+You need Windows PowerShell 5.1 or later. Administrator rights are not required.
 
 ```powershell
 git clone https://github.com/delriscotechnologies/netpulse.git
@@ -31,16 +31,9 @@ cd netpulse
 ## Output
 
 ```text
- _ __   ___| |_ _ __  _   _| |___  ___
-| '_ \ / _ \ __| '_ \| | | | / __|/ _ \
-| | | |  __/ |_| |_) | |_| | \__ \  __/
-|_| |_|\___|\__| .__/ \__,_|_|___/\___|
-               |_|
-LOCAL TCP CONNECTION MONITOR
-Del Risco Technologies  |  v1.0.0
------------------------------------------
- Mode           : SNAPSHOT
- Connections    : 4
+NETPULSE | LOCAL TCP CONNECTION MONITOR
+Del Risco Technologies | v1.1.0
+ Mode: SNAPSHOT | Connections: 4
 -----------------------------------------
 
 Process   PID   Local                 Remote                 Scope   Signature
@@ -86,6 +79,14 @@ Press Ctrl+C to stop watch mode.
 - Address scope and signature status are context, not trust or threat verdicts.
 
 See [SECURITY.md](SECURITY.md) for security guidance.
+
+## Tests
+
+The test suite runs on Windows PowerShell 5.1 with Pester 5:
+
+```powershell
+Invoke-Pester -Path .\tests -CI
+```
 
 ## License
 
