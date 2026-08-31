@@ -56,6 +56,10 @@ Describe 'Compare-NetPulseConnections' {
         $connection = [pscustomobject]@{ ConnectionKey = 'same' }
         @(Compare-NetPulseConnections @($connection) @($connection)).Count | Should -Be 0
     }
+
+    It 'accepts empty snapshots' {
+        @(Compare-NetPulseConnections @() @()).Count | Should -Be 0
+    }
 }
 
 Describe 'Get-NetPulseSnapshot' {
