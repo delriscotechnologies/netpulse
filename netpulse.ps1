@@ -1,236 +1,157 @@
 [CmdletBinding()]
 param([switch]$Watch)
-Set-StrictMode -Version Latest
 
+Set-StrictMode -Version Latest
 $script:WatchIntervalSeconds = 5
 $script:SignatureCache = @{}
 
 function Format-NetPulseEndpoint {
-    param(
-        [Parameter(Mandatory)][string]$Address,
-        [Parameter(Mandatory)][uint16]$Port
-    )
+    param([string]$Address, [uint16]$Port)
     if ($Address.Contains(':')) { return '[{0}]:{1}' -f $Address, $Port }
-    return '{0}:{1}' -f $Address, $Port
+    '{0}:{1}' -f $Address, $Port
 }
 
 function Get-NetPulseAddressScope {
-    param([Parameter(Mandatory)][string]$Address)
-    $parsedAddress = $null
-    if (-not [System.Net.IPAddress]::TryParse($Address, [ref]$parsedAddress)) { return 'Unknown' }
-    if ([System.Net.IPAddress]::IsLoopback($parsedAddress)) { return 'Loopback' }
+    param([string]$Address)
 
-    if ($parsedAddress.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetworkV6) {
-        if ($parsedAddress.IsIPv4MappedToIPv6) {
-            return Get-NetPulseAddressScope -Address $parsedAddress.MapToIPv4().ToString()
-        }
-        if ($parsedAddress.IsIPv6LinkLocal) { return 'LinkLocal' }
-        if ($parsedAddress.IsIPv6Multicast -or $parsedAddress.Equals([System.Net.IPAddress]::IPv6Any)) {
-            return 'Special'
-        }
+    $ip = $null
+    if (-not [System.Net.IPAddress]::TryParse($Address, [ref]$ip)) { return 'Unknown' }
+    if ([System.Net.IPAddress]::IsLoopback($ip)) { return 'Loopback' }
 
-        $bytes = $parsedAddress.GetAddressBytes()
-        if (($bytes[0] -band 0xFE) -eq 0xFC) { return 'Private' }
+    if ($ip.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetworkV6) {
+        if ($ip.IsIPv4MappedToIPv6) {
+            return Get-NetPulseAddressScope ($ip.MapToIPv4().ToString())
+        }
+        if ($ip.IsIPv6LinkLocal) { return 'LinkLocal' }
+        if ($ip.IsIPv6Multicast -or $ip.Equals([System.Net.IPAddress]::IPv6Any)) { return 'Special' }
+        if (($ip.GetAddressBytes()[0] -band 0xFE) -eq 0xFC) { return 'Private' }
         return 'Public'
     }
 
-    $bytes = $parsedAddress.GetAddressBytes()
+    $bytes = $ip.GetAddressBytes()
     if ($bytes[0] -eq 10 -or
         ($bytes[0] -eq 172 -and $bytes[1] -ge 16 -and $bytes[1] -le 31) -or
-        ($bytes[0] -eq 192 -and $bytes[1] -eq 168)) {
-        return 'Private'
-    }
+        ($bytes[0] -eq 192 -and $bytes[1] -eq 168)) { return 'Private' }
     if ($bytes[0] -eq 169 -and $bytes[1] -eq 254) { return 'LinkLocal' }
     if (($bytes[0] -eq 100 -and $bytes[1] -ge 64 -and $bytes[1] -le 127) -or
-        $bytes[0] -eq 0 -or $bytes[0] -ge 224) {
-        return 'Special'
-    }
-
-    return 'Public'
-}
-
-function Get-NetPulseSignatureStatus {
-    param([string]$Path)
-    if ([string]::IsNullOrWhiteSpace($Path)) { return 'Unknown' }
-    if ($script:SignatureCache.ContainsKey($Path)) { return $script:SignatureCache[$Path] }
-
-    try {
-        $status = (Get-AuthenticodeSignature -LiteralPath $Path -ErrorAction Stop).Status.ToString()
-    }
-    catch {
-        $status = 'Unknown'
-    }
-
-    $script:SignatureCache[$Path] = $status
-    return $status
+        $bytes[0] -eq 0 -or $bytes[0] -ge 224) { return 'Special' }
+    'Public'
 }
 
 function Get-NetPulseProcessInfo {
-    param([Parameter(Mandatory)][uint32]$ProcessId)
-    $name = 'Unknown'
-    $path = ''
-    $process = $null
+    param([uint32]$ProcessId)
 
+    $process = $null
     try {
         $process = Get-Process -Id $ProcessId -ErrorAction Stop
-        $name = $process.ProcessName
         try { $path = [string]$process.Path } catch { $path = '' }
-    }
-    catch {
-        $name = 'Unknown'
-    }
-    finally {
-        if ($null -ne $process) { $process.Dispose() }
-    }
+        $signature = 'Unknown'
 
-    [pscustomobject]@{
-        Name      = $name
-        Signature = Get-NetPulseSignatureStatus -Path $path
+        if ($path -and $script:SignatureCache.ContainsKey($path)) {
+            $signature = $script:SignatureCache[$path]
+        }
+        elseif ($path) {
+            try {
+                $signature = (Get-AuthenticodeSignature -LiteralPath $path -ErrorAction Stop).Status.ToString()
+            }
+            catch { $signature = 'Unknown' }
+            $script:SignatureCache[$path] = $signature
+        }
+
+        [pscustomobject]@{ Name = $process.ProcessName; Signature = $signature }
     }
+    catch { [pscustomobject]@{ Name = 'Unknown'; Signature = 'Unknown' } }
+    finally { if ($null -ne $process) { $process.Dispose() } }
 }
 
 function Get-NetPulseSnapshot {
-    $connections = Get-NetTCPConnection -State Established -ErrorAction Stop
     $processCache = @{}
-
-    $results = foreach ($connection in $connections) {
+    $connections = foreach ($connection in (Get-NetTCPConnection -State Established -ErrorAction Stop)) {
         $processId = [uint32]$connection.OwningProcess
         if (-not $processCache.ContainsKey($processId)) {
-            $processCache[$processId] = Get-NetPulseProcessInfo -ProcessId $processId
+            $processCache[$processId] = Get-NetPulseProcessInfo $processId
         }
 
-        $processInfo = $processCache[$processId]
+        $process = $processCache[$processId]
         [pscustomobject][ordered]@{
-            ConnectionKey = '{0}|{1}|{2}|{3}|{4}' -f $processId,
-                $connection.LocalAddress, $connection.LocalPort,
-                $connection.RemoteAddress, $connection.RemotePort
-            Process       = $processInfo.Name
+            ConnectionKey = '{0}|{1}|{2}|{3}|{4}' -f $processId, $connection.LocalAddress,
+                $connection.LocalPort, $connection.RemoteAddress, $connection.RemotePort
+            Process       = $process.Name
             PID           = $processId
-            Local         = Format-NetPulseEndpoint -Address $connection.LocalAddress -Port $connection.LocalPort
-            Remote        = Format-NetPulseEndpoint -Address $connection.RemoteAddress -Port $connection.RemotePort
-            Scope         = Get-NetPulseAddressScope -Address $connection.RemoteAddress
-            Signature     = $processInfo.Signature
+            Local         = Format-NetPulseEndpoint $connection.LocalAddress $connection.LocalPort
+            Remote        = Format-NetPulseEndpoint $connection.RemoteAddress $connection.RemotePort
+            Scope         = Get-NetPulseAddressScope $connection.RemoteAddress
+            Signature     = $process.Signature
         }
     }
-
-    $results | Sort-Object -Property Process, PID, Remote
+    $connections | Sort-Object Process, PID, Remote
 }
 
 function Show-NetPulseBanner {
-    param(
-        [Parameter(Mandatory)][string]$Mode,
-        [Parameter(Mandatory)][int]$ConnectionCount
-    )
-    $asciiArt = @(
-        ' _ __   ___| |_ _ __  _   _| |___  ___'
-        '| ''_ \ / _ \ __| ''_ \| | | | / __|/ _ \'
-        '| | | |  __/ |_| |_) | |_| | \__ \  __/'
-        '|_| |_|\___|\__| .__/ \__,_|_|___/\___|'
-        '               |_|'
-    )
-    $width = [int]($asciiArt | Measure-Object -Property Length -Maximum).Maximum
-
-    try {
-        $consoleWidth = [Console]::WindowWidth
-        if ($consoleWidth -le 0) { $consoleWidth = 80 }
-    }
-    catch {
-        $consoleWidth = 80
-    }
-
-    $leftPadding = ' ' * [int][Math]::Max(0, [Math]::Floor(($consoleWidth - $width) / 2))
-    $separator = '-' * $width
-    Write-Host ''
-    foreach ($line in $asciiArt) { Write-Host ($leftPadding + $line) -ForegroundColor White }
-    Write-Host ($leftPadding + 'LOCAL TCP CONNECTION MONITOR') -ForegroundColor DarkGray
-    Write-Host ($leftPadding + 'Del Risco Technologies  |  v1.0.0') -ForegroundColor DarkGray
-    Write-Host ($leftPadding + $separator) -ForegroundColor DarkGray
-    Write-Host ($leftPadding + ' Mode           : ') -NoNewline -ForegroundColor DarkGray
-    Write-Host $Mode -ForegroundColor Green
-    Write-Host ($leftPadding + ' Connections    : ') -NoNewline -ForegroundColor DarkGray
-    Write-Host $ConnectionCount -ForegroundColor Green
-
+    param([string]$Mode, [int]$ConnectionCount)
+    Write-Host "`nNETPULSE | LOCAL TCP CONNECTION MONITOR" -ForegroundColor White
+    Write-Host 'Del Risco Technologies | v1.1.0' -ForegroundColor DarkGray
+    Write-Host (' Mode: {0} | Connections: {1}' -f $Mode, $ConnectionCount)
     if ($Mode -eq 'WATCH') {
-        Write-Host ($leftPadding + ' Interval       : ') -NoNewline -ForegroundColor DarkGray
-        Write-Host "$($script:WatchIntervalSeconds) seconds" -ForegroundColor Green
+        Write-Host (' Interval: {0} seconds | Press Ctrl+C to stop' -f $script:WatchIntervalSeconds)
     }
-
-    Write-Host ($leftPadding + $separator) -ForegroundColor DarkGray
-    if ($Mode -eq 'WATCH') { Write-Host ($leftPadding + ' Press Ctrl+C to stop') -ForegroundColor DarkGray }
-    Write-Host ''
+    Write-Host "-----------------------------------------`n" -ForegroundColor DarkGray
 }
 
 function Show-NetPulseConnection {
-    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Connections)
+    param([object[]]$Connections)
     if ($Connections.Count -eq 0) {
         Write-Host 'No established TCP connections found.' -ForegroundColor DarkGray
         return
     }
-
-    $table = $Connections |
-        Select-Object -Property Process, PID, Local, Remote, Scope, Signature |
-        Format-Table -AutoSize |
-        Out-String -Width 240
-    Write-Host $table.TrimEnd()
+    $Connections | Format-Table Process, PID, Local, Remote, Scope, Signature -AutoSize | Out-Host
 }
 
 function Show-NetPulseEvent {
-    param(
-        [Parameter(Mandatory)][string]$Event,
-        [Parameter(Mandatory)]$Connection
-    )
+    param([string]$Event, $Connection)
     $color = if ($Event -eq 'OPENED') { 'Green' } else { 'Yellow' }
     $message = '[{0}] {1,-6} {2} ({3}) -> {4}' -f (Get-Date -Format 'HH:mm:ss'),
         $Event, $Connection.Process, $Connection.PID, $Connection.Remote
     Write-Host $message -ForegroundColor $color
 }
 
-function Start-NetPulseWatch {
-    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$InitialConnections)
-    Show-NetPulseBanner -Mode WATCH -ConnectionCount $InitialConnections.Count
-    Show-NetPulseConnection -Connections $InitialConnections
-    Write-Host ''
+function Compare-NetPulseConnections {
+    param([object[]]$Previous, [object[]]$Current)
+    $previousMap = @{}
+    $currentMap = @{}
+    foreach ($connection in $Previous) { $previousMap[$connection.ConnectionKey] = $connection }
+    foreach ($connection in $Current) { $currentMap[$connection.ConnectionKey] = $connection }
 
-    $previousConnections = $InitialConnections
+    foreach ($key in $currentMap.Keys) {
+        if (-not $previousMap.ContainsKey($key)) {
+            [pscustomobject]@{ Event = 'OPENED'; Connection = $currentMap[$key] }
+        }
+    }
+    foreach ($key in $previousMap.Keys) {
+        if (-not $currentMap.ContainsKey($key)) {
+            [pscustomobject]@{ Event = 'CLOSED'; Connection = $previousMap[$key] }
+        }
+    }
+}
+
+function Start-NetPulseWatch {
+    param([object[]]$InitialConnections)
+
+    Show-NetPulseBanner WATCH $InitialConnections.Count
+    Show-NetPulseConnection $InitialConnections
+    $previous = $InitialConnections
+
     try {
         while ($true) {
             Start-Sleep -Seconds $script:WatchIntervalSeconds
-            $currentConnections = @(Get-NetPulseSnapshot)
-            $previousMap = @{}
-            $currentMap = @{}
-
-            foreach ($connection in $previousConnections) {
-                $previousMap[$connection.ConnectionKey] = $connection
+            $current = @(Get-NetPulseSnapshot)
+            foreach ($change in @(Compare-NetPulseConnections $previous $current)) {
+                Show-NetPulseEvent $change.Event $change.Connection
             }
-            foreach ($connection in $currentConnections) {
-                $currentMap[$connection.ConnectionKey] = $connection
-            }
-
-            foreach ($key in ($currentMap.Keys | Sort-Object)) {
-                if (-not $previousMap.ContainsKey($key)) {
-                    Show-NetPulseEvent -Event OPENED -Connection $currentMap[$key]
-                }
-            }
-            foreach ($key in ($previousMap.Keys | Sort-Object)) {
-                if (-not $currentMap.ContainsKey($key)) {
-                    Show-NetPulseEvent -Event CLOSED -Connection $previousMap[$key]
-                }
-            }
-
-            $previousConnections = $currentConnections
+            $previous = $current
         }
     }
-    finally {
-        try {
-            $previousColor = [Console]::ForegroundColor
-            [Console]::ForegroundColor = [ConsoleColor]::DarkGray
-            [Console]::WriteLine("`nnetpulse stopped.")
-            [Console]::ForegroundColor = $previousColor
-        }
-        catch {
-            $null = $_
-        }
-    }
+    finally { Write-Host "`nnetpulse stopped." -ForegroundColor DarkGray }
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
@@ -238,24 +159,21 @@ if ($MyInvocation.InvocationName -ne '.') {
         if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
             throw 'netpulse requires Windows.'
         }
-
-        foreach ($commandName in 'Get-NetTCPConnection', 'Get-AuthenticodeSignature') {
-            if (-not (Get-Command -Name $commandName -CommandType Cmdlet -ErrorAction SilentlyContinue)) {
-                throw "Required command not found: $commandName"
+        foreach ($command in 'Get-NetTCPConnection', 'Get-AuthenticodeSignature') {
+            if (-not (Get-Command $command -CommandType Cmdlet -ErrorAction SilentlyContinue)) {
+                throw "Required command not found: $command"
             }
         }
 
         $connections = @(Get-NetPulseSnapshot)
-        if ($Watch) {
-            Start-NetPulseWatch -InitialConnections $connections
-        }
+        if ($Watch) { Start-NetPulseWatch $connections }
         else {
-            Show-NetPulseBanner -Mode SNAPSHOT -ConnectionCount $connections.Count
-            Show-NetPulseConnection -Connections $connections
+            Show-NetPulseBanner SNAPSHOT $connections.Count
+            Show-NetPulseConnection $connections
         }
     }
     catch {
-        Write-Host ("netpulse error: {0}" -f $_.Exception.Message) -ForegroundColor Red
+        Write-Host ('netpulse error: {0}' -f $_.Exception.Message) -ForegroundColor Red
         exit 1
     }
 }
