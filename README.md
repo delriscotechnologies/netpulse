@@ -24,7 +24,7 @@ cd netpulse
 
 1. Reads established TCP connections on the local computer.
 2. Maps connections to their owning process and PID.
-3. Classifies the remote address scope.
+3. Classifies remote addresses as loopback, link-local, private, special-purpose, or external.
 4. Checks Authenticode status when the executable path is available.
 5. Optionally watches for opened and closed connections.
 
@@ -32,16 +32,15 @@ cd netpulse
 
 ```text
 NETPULSE | LOCAL TCP CONNECTION MONITOR
-Del Risco Technologies | v1.1.0
- Mode: SNAPSHOT | Connections: 4
+Mode: SNAPSHOT | Connections: 4
 -----------------------------------------
 
 Process   PID   Local                 Remote                 Scope   Signature
 -------   ---   -----                 ------                 -----   ---------
-chrome    8420  192.168.1.25:52143    203.0.113.10:443       Public  Valid
-code      9116  192.168.1.25:52201    198.51.100.24:443      Public  Valid
-svchost   1540  192.168.1.25:49722    203.0.113.53:443       Public  Valid
-discord   6312  192.168.1.25:52180    198.51.100.80:443      Public  Valid
+chrome    8420  192.168.1.25:52143    203.0.113.10:443       Special  Valid
+code      9116  192.168.1.25:52201    198.51.100.24:443      Special  Valid
+svchost   1540  192.168.1.25:49722    203.0.113.53:443       Special  Valid
+discord   6312  192.168.1.25:52180    198.51.100.80:443      Special  Valid
 ```
 
 | Field | Description |
@@ -50,7 +49,7 @@ discord   6312  192.168.1.25:52180    198.51.100.80:443      Public  Valid
 | PID | Process identifier |
 | Local | Local address and port |
 | Remote | Remote address and port |
-| Scope | Remote address category |
+| Scope | Remote address category: `Loopback`, `LinkLocal`, `Private`, `Special`, or `External` |
 | Signature | Authenticode status |
 
 ## Demo
@@ -76,6 +75,7 @@ Press Ctrl+C to stop watch mode.
 - Does not modify processes, firewall rules, registry settings, or system configuration.
 - Does not store persistent connection history.
 - Short-lived connections between samples can be missed.
+- `External` means outside the recognized local or special ranges; it does not guarantee public routability.
 - Address scope and signature status are context, not trust or threat verdicts.
 
 See [SECURITY.md](SECURITY.md) for security guidance.
