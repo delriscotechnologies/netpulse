@@ -84,6 +84,6 @@ Describe 'Get-NetPulseSnapshot' {
         $result[0].Process | Should -Be 'browser'
         $result.Remote | Should -Contain '8.8.8.8:443'
         $result.Local | Should -Contain '[::1]:50001'
-        Assert-MockCalled Get-NetPulseProcessInfo -Times 1 -Exactly
+        Should -Invoke Get-NetPulseProcessInfo -Times 1 -Exactly
     }
 }
