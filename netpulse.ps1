@@ -1,18 +1,14 @@
 #Requires -Version 5.1
-
 [CmdletBinding()]
 param([switch]$Watch)
-
 Set-StrictMode -Version Latest
 $Interval = 5
 $SignatureCache = @{}
-
 function Get-NetPulseScope {
     param([string]$Address)
     $ip = $null
     if (-not [Net.IPAddress]::TryParse($Address, [ref]$ip)) { return 'Unknown' }
     if ([Net.IPAddress]::IsLoopback($ip)) { return 'Loopback' }
-
     if ($ip.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetworkV6) {
         if ($ip.IsIPv4MappedToIPv6) { return Get-NetPulseScope ($ip.MapToIPv4().ToString()) }
         $b = $ip.GetAddressBytes()
@@ -22,7 +18,6 @@ function Get-NetPulseScope {
         if (($b[0] -band 0xFE) -eq 0xFC) { return 'Private' }
         return 'Public'
     }
-
     $b = $ip.GetAddressBytes()
     if ($b[0] -eq 10 -or ($b[0] -eq 172 -and $b[1] -in 16..31) -or
         ($b[0] -eq 192 -and $b[1] -eq 168)) { return 'Private' }
@@ -33,7 +28,6 @@ function Get-NetPulseScope {
     if ($docs -or ($b[0] -eq 100 -and $b[1] -in 64..127) -or $b[0] -eq 0 -or $b[0] -ge 224) { return 'Special' }
     'Public'
 }
-
 function Get-NetPulseProcess {
     param([uint32]$Id)
     $p = $null
@@ -55,7 +49,6 @@ function Get-NetPulseProcess {
     } catch { [pscustomobject]@{ Name = 'Unknown'; Signature = 'Unknown' } }
     finally { if ($null -ne $p) { $p.Dispose() } }
 }
-
 function Get-NetPulseSnapshot {
     $processes = @{}
     foreach ($c in @(Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue)) {
@@ -71,7 +64,6 @@ function Get-NetPulseSnapshot {
         }
     }
 }
-
 function Show-NetPulseSnapshot {
     param([AllowEmptyCollection()][object[]]$Connections, [string]$Mode)
     Write-Host "`nNETPULSE | LOCAL TCP CONNECTION MONITOR" -ForegroundColor White
@@ -83,7 +75,6 @@ function Show-NetPulseSnapshot {
     $Connections | Sort-Object Process, PID, Remote | Format-Table Process, PID, Local, Remote, Scope, Signature -AutoSize |
         Out-String -Width 240 | Write-Host
 }
-
 if ($MyInvocation.InvocationName -ne '.') {
     try {
         if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'netpulse requires Windows.' }
@@ -92,7 +83,6 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
         $current = @(Get-NetPulseSnapshot)
         if (-not $Watch) { Show-NetPulseSnapshot -Connections $current -Mode SNAPSHOT; return }
-
         Show-NetPulseSnapshot -Connections $current -Mode WATCH
         $previous = @{}; foreach ($c in $current) { $previous[$c.Key] = $c }
         try {
