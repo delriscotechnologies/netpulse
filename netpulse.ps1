@@ -99,12 +99,13 @@ function Show-NetPulseBanner {
 }
 
 function Show-NetPulseConnection {
-    param([object[]]$Connections)
+    param([AllowEmptyCollection()][object[]]$Connections)
     if ($Connections.Count -eq 0) {
         Write-Host 'No established TCP connections found.' -ForegroundColor DarkGray
         return
     }
-    $Connections | Format-Table Process, PID, Local, Remote, Scope, Signature -AutoSize | Out-Host
+    $Connections | Format-Table Process, PID, Local, Remote, Scope, Signature -AutoSize |
+        Out-String -Width 240 | Write-Host
 }
 
 function Show-NetPulseEvent {
@@ -116,7 +117,10 @@ function Show-NetPulseEvent {
 }
 
 function Compare-NetPulseConnections {
-    param([object[]]$Previous, [object[]]$Current)
+    param(
+        [AllowEmptyCollection()][object[]]$Previous,
+        [AllowEmptyCollection()][object[]]$Current
+    )
     $previousMap = @{}
     $currentMap = @{}
     foreach ($connection in $Previous) { $previousMap[$connection.ConnectionKey] = $connection }
@@ -135,7 +139,7 @@ function Compare-NetPulseConnections {
 }
 
 function Start-NetPulseWatch {
-    param([object[]]$InitialConnections)
+    param([AllowEmptyCollection()][object[]]$InitialConnections)
 
     Show-NetPulseBanner WATCH $InitialConnections.Count
     Show-NetPulseConnection $InitialConnections
