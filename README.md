@@ -80,14 +80,6 @@ Press Ctrl+C to stop watch mode.
 
 See [SECURITY.md](SECURITY.md) for security guidance.
 
-## Tests
-
-The test suite runs on Windows PowerShell 5.1 with Pester 5:
-
-```powershell
-Invoke-Pester -Path .\tests -CI
-```
-
 ## License
 
 Netpulse is available under the [MIT License](LICENSE).
