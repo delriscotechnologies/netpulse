@@ -77,9 +77,3 @@ Press Ctrl+C to stop watch mode.
 - Does not store persistent connection history.
 - Short-lived connections between samples can be missed.
 - Address scope is a heuristic, not a complete special-purpose registry or proof of reachability; signature status is not a threat verdict.
-
-See [SECURITY.md](SECURITY.md) for security guidance.
-
-## License
-
-Netpulse is available under the [MIT License](LICENSE).
