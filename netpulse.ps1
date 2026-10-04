@@ -25,7 +25,7 @@ function Get-NetPulseScope {
     $docs = ($b[0] -eq 192 -and $b[1] -eq 0 -and $b[2] -eq 2) -or
         ($b[0] -eq 198 -and $b[1] -eq 51 -and $b[2] -eq 100) -or
         ($b[0] -eq 203 -and $b[1] -eq 0 -and $b[2] -eq 113)
-    if ($docs -or ($b[0] -eq 100 -and $b[1] -in 64..127) -or $b[0] -eq 0 -or $b[0] -ge 224) { return 'Special' }
+    if ($docs -or ($b[0] -eq 198 -and $b[1] -in 18..19) -or ($b[0] -eq 100 -and $b[1] -in 64..127) -or $b[0] -eq 0 -or $b[0] -ge 224) { return 'Special' }
     'Public'
 }
 function Get-NetPulseProcess {
@@ -51,7 +51,7 @@ function Get-NetPulseProcess {
 }
 function Get-NetPulseSnapshot {
     $processes = @{}
-    foreach ($c in @(Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue)) {
+    foreach ($c in @(Get-NetTCPConnection -ErrorAction Stop | Where-Object State -eq Established)) {
         $id = [uint32]$c.OwningProcess
         if (-not $processes.ContainsKey($id)) { $processes[$id] = Get-NetPulseProcess $id }
         $p = $processes[$id]
@@ -88,7 +88,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         try {
             while ($true) {
                 Start-Sleep -Seconds $Interval
-                $current = @(Get-NetPulseSnapshot)
+                try { $current = @(Get-NetPulseSnapshot) } catch { Write-Warning $_.Exception.Message; continue }
                 $next = @{}; foreach ($c in $current) { $next[$c.Key] = $c }
                 foreach ($key in $next.Keys) {
                     if (-not $previous.ContainsKey($key)) {

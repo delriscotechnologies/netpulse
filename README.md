@@ -32,16 +32,16 @@ cd netpulse
 
 ```text
 NETPULSE | LOCAL TCP CONNECTION MONITOR
-Del Risco Technologies | v1.1.0
+Del Risco Technologies
  Mode: SNAPSHOT | Connections: 4
 -----------------------------------------
 
 Process   PID   Local                 Remote                 Scope   Signature
 -------   ---   -----                 ------                 -----   ---------
-chrome    8420  192.168.1.25:52143    203.0.113.10:443       Public  Valid
-code      9116  192.168.1.25:52201    198.51.100.24:443      Public  Valid
-svchost   1540  192.168.1.25:49722    203.0.113.53:443       Public  Valid
-discord   6312  192.168.1.25:52180    198.51.100.80:443      Public  Valid
+chrome    8420  192.168.1.25:52143    203.0.113.10:443       Special Valid
+code      9116  192.168.1.25:52201    198.51.100.24:443      Special Valid
+svchost   1540  192.168.1.25:49722    203.0.113.53:443       Special Valid
+discord   6312  192.168.1.25:52180    198.51.100.80:443      Special Valid
 ```
 
 | Field | Description |
@@ -76,7 +76,7 @@ Press Ctrl+C to stop watch mode.
 - Does not modify processes, firewall rules, registry settings, or system configuration.
 - Does not store persistent connection history.
 - Short-lived connections between samples can be missed.
-- Address scope and signature status are context, not trust or threat verdicts.
+- Address scope is a heuristic, not a complete special-purpose registry or proof of reachability; signature status is not a threat verdict.
 
 See [SECURITY.md](SECURITY.md) for security guidance.
 
